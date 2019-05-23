@@ -112,6 +112,6 @@ const app = http.createServer((req, res) => {
 })
 */
 
-const port = 3001
-app.listen(port)
-console.log(`Server runnign on port ${port}`)
+const PORT = process.env.PORT || 3001
+app.listen(PORT)
+console.log(`Server runnign on port ${PORT}`)
