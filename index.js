@@ -74,6 +74,11 @@ app.get('/api/persons/:id', (request, response) => {
     }
 })
 
+app.get('/', (req, res) => {
+    res.send('<h1>Hello World!</h1>')
+})
+
+
 app.delete('/api/persons/:id', (request, response) => {
     console.log("/api/persons poistetaan")
     const id = Number(request.params.id)
