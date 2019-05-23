@@ -105,13 +105,7 @@ app.post('/api/persons', (request, response) => {
     response.json(target)
 })
 
-/*
-const app = http.createServer((req, res) => {
-    res.writeHead(200, {'Content-Type': 'text/plain'})
-    res.end('Hello World!')
-})
-*/
-
 const PORT = process.env.PORT || 3001
-app.listen(PORT)
-console.log(`Server runnign on port ${PORT}`)
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`)
+})
