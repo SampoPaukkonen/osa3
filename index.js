@@ -3,6 +3,7 @@ const express = require('express')
 const morgan  = require('morgan')
 const bodyParser = require('body-parser')
 const app = express()
+
 app.use(cors())
 morgan.token('content', function(req, res) {return JSON.stringify(req.body)})
 app.use(morgan(function (tokens, req, res) {
@@ -51,16 +52,19 @@ const generateID = () => {
 }
 
 app.get('/api/persons', (request, response) => {
+    console.log("/api/persons getataan")
     response.json(persons)
 })
 
 app.get('/info', (request, response) => {
+    console.log("/info getataan")
     const mainInfo = `<div>Puhelinluettelossa ${persons.length} henkilön tiedot</div>`
     const time     = `<div>${new Date()}</div>`
     response.send(mainInfo + time)
 })
 
 app.get('/api/persons/:id', (request, response) => {
+    console.log("/api/persons/:id getataan")
     const id = Number(request.params.id)
     const target = persons.find(person => person.id === id)
     if (target) {
@@ -71,6 +75,7 @@ app.get('/api/persons/:id', (request, response) => {
 })
 
 app.delete('/api/persons/:id', (request, response) => {
+    console.log("/api/persons poistetaan")
     const id = Number(request.params.id)
     persons  = persons.filter(target => target.id !== id)
 
@@ -78,6 +83,7 @@ app.delete('/api/persons/:id', (request, response) => {
 })
 
 app.post('/api/persons', (request, response) => {
+    console.log("/api/persons postataan")
     //Sovitaan, että id on erisuuri, kuin nolla, joten
     const temp = generateID()
     const id = temp > 0
@@ -105,7 +111,7 @@ app.post('/api/persons', (request, response) => {
     response.json(target)
 })
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
