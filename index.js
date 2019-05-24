@@ -63,11 +63,14 @@ app.get('/info', (request, response) => {
     const time     = `<div>${new Date()}</div>`
     response.send(mainInfo + time)
 })
-
+/*Voi olla case seuraava: Syystä tai toisesta serveri ei löydä frontendin haluamaa henkilöä
+ja näin ollen vastaa takaisin 404.
+*/
 app.get('/api/persons/:id', (request, response) => {
     console.log("/api/persons/:id getataan")
     const id = Number(request.params.id)
     const target = persons.find(person => person.id === id)
+    console.log("Haluttu kohde on", target)
     if (target) {
         response.json(target)
     } else {
