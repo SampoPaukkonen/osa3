@@ -52,30 +52,35 @@ const generateID = () => {
     return Math.floor(Math.random() * Math.floor(persons.length * 1000))
 }
 
+
+
 app.get('/api/persons', (request, response) => {
-    console.log("/api/persons getataan")
     response.json(persons)
 })
 
 app.get('/info', (request, response) => {
-    console.log("/info getataan")
     const mainInfo = `<div>Puhelinluettelossa ${persons.length} henkilön tiedot</div>`
     const time     = `<div>${new Date()}</div>`
     response.send(mainInfo + time)
 })
 /*Voi olla case seuraava: Syystä tai toisesta serveri ei löydä frontendin haluamaa henkilöä
-ja näin ollen vastaa takaisin 404.
+ja näin ollen vastaa takaisin 404.  
 */
 app.get('/api/persons/:id', (request, response) => {
-    console.log("/api/persons/:id getataan")
     const id = Number(request.params.id)
     const target = persons.find(person => person.id === id)
-    console.log("Haluttu kohde on", target)
     if (target) {
         response.json(target)
     } else {
         response.status(404).end()
     }
+})
+//Serverin reagointi henkilötietojen päivitykseen, eli PUT-pyyntöön
+app.put('/api/persons/:id', (request, response) => {
+    const id = Number(request.params.id)
+    const target = request.body
+    persons = persons.map(person => person.id === id ? target: person)
+    response.json(target)
 })
 
 app.get('/', (req, res) => {
@@ -84,7 +89,6 @@ app.get('/', (req, res) => {
 
 
 app.delete('/api/persons/:id', (request, response) => {
-    console.log("/api/persons poistetaan")
     const id = Number(request.params.id)
     persons  = persons.filter(target => target.id !== id)
 
@@ -92,7 +96,6 @@ app.delete('/api/persons/:id', (request, response) => {
 })
 
 app.post('/api/persons', (request, response) => {
-    console.log("/api/persons postataan")
     //Sovitaan, että id on erisuuri, kuin nolla, joten
     const temp = generateID()
     const id = temp > 0
