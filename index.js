@@ -18,6 +18,7 @@ app.use(morgan(function (tokens, req, res) {
   })
 )
 app.use(bodyParser.json())
+app.use(express.static('build'))
 let persons = [
     {
         id: 1,
