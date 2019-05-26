@@ -30,15 +30,9 @@ const generateID = () => {
 app.get('/api/persons', (request, response, next) => {
     Person.find({}).then(targets => {
         response.json(targets.map(target => {
-            console.log(target.toJSON())
             return (target.toJSON())}))
     })
-    .catch(error => {
-        console.log(error)
-        next(error)
-        //response.status(404).end()
-    })
-    //response.json(persons)
+    .catch(error => next(error))
 })
 
 app.get('/info', (request, response, next) => {
@@ -47,11 +41,7 @@ app.get('/info', (request, response, next) => {
         const mainInfo = `<div>Puhelinluettelossa ${targets.length} henkilön tiedot</div>`
         response.send(mainInfo + time)
     })
-    .catch(error => {
-        console.log(error)
-        next(error)
-        //response.status(404).end()
-    })
+    .catch(error => next(error))
 })
 /*Voi olla case seuraava: Syystä tai toisesta serveri ei löydä frontendin haluamaa henkilöä
 ja näin ollen vastaa takaisin 404.  
@@ -65,15 +55,10 @@ app.get('/api/persons/:id', (request, response) => {
         }
         response.json(person.toJSON())
     })
-    .catch(error => {
-        //console.log(error)
-        next(error)
-        //response.status(400).send({error: 'epämuodostunut id'})
-    })
+    .catch(error => next(error))
 })
 //Serverin reagointi henkilötietojen päivitykseen, eli PUT-pyyntöön
 app.put('/api/persons/:id', (request, response, next) => {
-   // console.log(request.params)
     const body = request.body
     const person = {
         name: body.name,
@@ -83,9 +68,7 @@ app.put('/api/persons/:id', (request, response, next) => {
         .then(updatedPerson => {
             response.json(updatedPerson.toJSON())
         })
-        .catch(error => {
-            next(error)
-            console.log(error.message)})
+        .catch(error => next(error))
 })
 
 app.get('/', (req, res) => {
@@ -95,7 +78,6 @@ app.get('/', (req, res) => {
 
 app.delete('/api/persons/:id', (request, response, next) => {
     const id = request.params.id
-    //console.log(id)
     Person.findByIdAndDelete(id)
         .then(result => {
             response.status(204).end()
@@ -112,9 +94,7 @@ app.post('/api/persons', (request, response, next) => {
     target.save().then(savedTarget => {
         response.json(savedTarget.toJSON())
     })
-    .catch(error => {
-        console.log(error)
-        next(error)})
+    .catch(error => next(error))
 })
 
 const unknownEndpoint = (request, response) => {
@@ -124,12 +104,10 @@ const unknownEndpoint = (request, response) => {
 app.use(unknownEndpoint)
 
 const errorHandler = (error, request, response, next) => {
-    console.log("Tämä viesti on virheenkäsittelijän saama viesti: ", error.message)
 
     if(error.name === 'CastError' && error.kind == 'ObjectId') {
         return response.status(400).send({error: "epämuodostunut id"})
     } else if (error.name === 'ValidationError') {
-        console.log("Tämä viesti on virheenkäsittelijän haaran ValidationError sisältä: ", error.message)
         return response.status(400).send({error: error.message})
     }
 
