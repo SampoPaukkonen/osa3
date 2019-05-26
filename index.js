@@ -1,9 +1,14 @@
-const cors    = require('cors')
-const express = require('express')
-const morgan  = require('morgan')
-const bodyParser = require('body-parser')
-const app = express()
 
+require('dotenv').config()
+const express = require('express')
+const app = express()
+const bodyParser = require('body-parser')
+const cors    = require('cors')
+const morgan  = require('morgan')
+const Person  = require('./models/person')
+app.use(express.static('build'))
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({extended: true}))
 app.use(cors())
 morgan.token('content', function(req, res) {return JSON.stringify(req.body)})
 app.use(morgan(function (tokens, req, res) {
@@ -17,70 +22,70 @@ app.use(morgan(function (tokens, req, res) {
     ].join(' ')
   })
 )
-app.use(bodyParser.json())
-app.use(express.static('build'))
-let persons = [
-    {
-        id: 1,
-        name: "Arto Hellas",
-        number: "045-123654"
-    },
-    {
-        id: 2,
-        name: "Arto Järvinen",
-        number: "041-21423123"
-    },
-    {
-        id: 3,
-        name: "Lea Kutvonen",
-        number: "040-4323234"
-    },
-    {
-        id: 4,
-        name: "Martti Tienari",
-        number: "09-784232"
-    },
-    {
-        id: 5,
-        name: "Sampo Paukkonen",
-        number: "Jotain pyhiä lukuja"
-    }
-]
-
-
+/*
 const generateID = () => {
-    return Math.floor(Math.random() * Math.floor(persons.length * 1000))
+    return Math.floor(Math.random() * Math.floor(100000))
 }
-
-
-
-app.get('/api/persons', (request, response) => {
-    response.json(persons)
+*/
+app.get('/api/persons', (request, response, next) => {
+    Person.find({}).then(targets => {
+        response.json(targets.map(target => {
+            console.log(target.toJSON())
+            return (target.toJSON())}))
+    })
+    .catch(error => {
+        console.log(error)
+        next(error)
+        //response.status(404).end()
+    })
+    //response.json(persons)
 })
 
-app.get('/info', (request, response) => {
-    const mainInfo = `<div>Puhelinluettelossa ${persons.length} henkilön tiedot</div>`
-    const time     = `<div>${new Date()}</div>`
-    response.send(mainInfo + time)
+app.get('/info', (request, response, next) => {
+    Person.find({}).then(targets => {
+        const time     = `<div>${new Date()}</div>`
+        const mainInfo = `<div>Puhelinluettelossa ${targets.length} henkilön tiedot</div>`
+        response.send(mainInfo + time)
+    })
+    .catch(error => {
+        console.log(error)
+        next(error)
+        //response.status(404).end()
+    })
 })
 /*Voi olla case seuraava: Syystä tai toisesta serveri ei löydä frontendin haluamaa henkilöä
 ja näin ollen vastaa takaisin 404.  
 */
 app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const target = persons.find(person => person.id === id)
-    if (target) {
-        response.json(target)
-    } else {
-        response.status(404).end()
-    }
+    Person.findById(request.params.id).then(person => {
+        if (person) {
+            response.json(person.toJSON())
+        } else {
+            response.status(404).end()
+        }
+        response.json(person.toJSON())
+    })
+    .catch(error => {
+        //console.log(error)
+        next(error)
+        //response.status(400).send({error: 'epämuodostunut id'})
+    })
 })
 //Serverin reagointi henkilötietojen päivitykseen, eli PUT-pyyntöön
-app.put('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const target = request.body
-    persons = persons.map(person => person.id === id ? target: person)
-    response.json(target)
+app.put('/api/persons/:id', (request, response, next) => {
+   // console.log(request.params)
+    const body = request.body
+    const person = {
+        name: body.name,
+        number: body.number
+    }
+    Person.findByIdAndUpdate(request.params.id, person, {runValidators: true, context: 'query'})
+        .then(updatedPerson => {
+            response.json(updatedPerson.toJSON())
+        })
+        .catch(error => {
+            next(error)
+            console.log(error.message)})
 })
 
 app.get('/', (req, res) => {
@@ -88,42 +93,52 @@ app.get('/', (req, res) => {
 })
 
 
-app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    persons  = persons.filter(target => target.id !== id)
-
-    response.status(204).end()
+app.delete('/api/persons/:id', (request, response, next) => {
+    const id = request.params.id
+    //console.log(id)
+    Person.findByIdAndDelete(id)
+        .then(result => {
+            response.status(204).end()
+        })
+        .catch(error => next(error))
 })
 
-app.post('/api/persons', (request, response) => {
-    //Sovitaan, että id on erisuuri, kuin nolla, joten
-    const temp = generateID()
-    const id = temp > 0
-    ? temp
-    : 1
-    const target = request.body
-    if (!target.name) {
-        return response.status(404).json({
-            error: 'name is missing'
-        })
-    } else if (!target.number) {
-        return response.status(404).json({
-            error: 'number is missing'
-        })
+app.post('/api/persons', (request, response, next) => {
+    const body = request.body
+    const target = new Person({
+        name: body.name,
+        number: body.number
+    })
+    target.save().then(savedTarget => {
+        response.json(savedTarget.toJSON())
+    })
+    .catch(error => {
+        console.log(error)
+        next(error)})
+})
 
-    } 
-    const alreadeyIn = persons.find(person => person.name.includes(target.name))
-    if (alreadeyIn) {
-        return response.status(404).json({
-            error: 'name must be unique'
-        })
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({error: "tuntematon päätepiste"})
+}
+//olemattomien osoitteiden käsittely
+app.use(unknownEndpoint)
+
+const errorHandler = (error, request, response, next) => {
+    console.log("Tämä viesti on virheenkäsittelijän saama viesti: ", error.message)
+
+    if(error.name === 'CastError' && error.kind == 'ObjectId') {
+        return response.status(400).send({error: "epämuodostunut id"})
+    } else if (error.name === 'ValidationError') {
+        console.log("Tämä viesti on virheenkäsittelijän haaran ValidationError sisältä: ", error.message)
+        return response.status(400).send({error: error.message})
     }
-    target.id = id
-    persons = persons.concat(target)
-    response.json(target)
-})
 
-const PORT = process.env.PORT || 3001;
+    next(error)
+}
+app.use(errorHandler)
+
+
+const PORT = process.env.PORT
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
