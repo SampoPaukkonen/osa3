@@ -22,7 +22,6 @@ app.use(morgan(function (tokens, req, res) {
   ].join(' ')
 })
 )
-
 app.get('/api/persons', (request, response, next) => {
   Person.find({}).then(targets => {
     response.json(targets.map(target => {
